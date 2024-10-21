@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart'; // Add this import statement
+import 'screens/home_screen.dart'; // Correct import statement
 
 void main() {
   runApp(const MyApp());
@@ -20,3 +20,4 @@ class MyApp extends StatelessWidget {
     );
   }
 }
+
