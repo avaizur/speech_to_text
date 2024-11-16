@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Block all cleartext (HTTP) traffic -->
+    <domain-config cleartextTrafficPermitted="false">
+        <!-- Ensure SSL/TLS is used for your domain -->
+        <domain includeSubdomains="true">lectura.co.uk</domain>
+    </domain-config>
+
+    <!-- Optional: Add specific domains with cleartext traffic permitted for legacy systems or testing -->
+    <!--
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">legacy.example.com</domain>
+    </domain-config>
+    -->
+</network-security-config>

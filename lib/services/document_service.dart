@@ -1,13 +1,21 @@
-mport 'dart:io';
+import 'dart:io';
 import 'package:path_provider/path_provider.dart';
-import 'package:file_saver/file_saver.dart';
+import 'package:open_filex/open_filex.dart';
 
 class DocumentService {
   Future<void> saveAsWord(String content, String filename) async {
+    // Get the application's documents directory
     final directory = await getApplicationDocumentsDirectory();
-    final file = File('${directory.path}/$filename.docx');
+
+    // Construct the file path
+    final filePath = '${directory.path}/$filename.docx';
+
+    // Write the content to the file
+    final file = File(filePath);
     await file.writeAsString(content);
-    await FileSaver.instance.saveAs(filename, file.readAsBytesSync(), "docx", MimeType.MICROSOFTWORD);
+
+    // Open the file (optional)
+    await OpenFilex.open(filePath);
   }
 }
 

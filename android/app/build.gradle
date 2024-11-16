@@ -1,14 +1,21 @@
 plugins {
     id "com.android.application"
     id "kotlin-android"
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
-    id "dev.flutter.flutter-gradle-plugin"
+    id "dev.flutter.flutter-gradle-plugin" // Flutter plugin must follow Android and Kotlin
 }
 
 android {
-    namespace = "com.example.speech_to_text"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    namespace = "com.example.lectura"
+    compileSdk = 34 // Updated to SDK 34 for latest features and APIs
+
+    defaultConfig {
+        applicationId = "com.example.lectura" // Unique app ID
+        minSdk = 21 // Minimum SDK level, compatible with most modern devices
+        targetSdk = 34 // Matches compileSdk for best compatibility
+        versionCode = 1
+        versionName = "1.0"
+        multiDexEnabled = true // Necessary for apps with a large number of methods
+    }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -16,29 +23,40 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8
-    }
-
-    defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.speech_to_text"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+        jvmTarget = '1.8' // Ensures compatibility with Java 8 features
     }
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.debug
+            // Add signing configuration for production builds
+            signingConfig signingConfigs.debug // Replace with 'signingConfigs.release' for production
+            minifyEnabled true // Enable for production to reduce APK size
+            shrinkResources true // Remove unused resources in production builds
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            minifyEnabled false // Keep debug builds easier to debug
+            shrinkResources false
         }
     }
 }
 
 flutter {
-    source = "../.."
+    source = "../.." // Points to the root of the Flutter project
+}
+
+dependencies {
+    // Core Android libraries
+    implementation "androidx.core:core-ktx:1.13.1"
+    implementation "androidx.appcompat:appcompat:1.6.1"
+    implementation "com.google.android.material:material:1.9.0"
+    implementation "androidx.constraintlayout:constraintlayout:2.1.4"
+
+    // Google Play Services for authentication and related services
+    implementation "com.google.android.gms:play-services-auth:20.5.0"
+
+    // Multidex support for apps with high method counts
+    implementation 'androidx.multidex:multidex:2.0.1'
+
+    // Add additional dependencies here
 }
