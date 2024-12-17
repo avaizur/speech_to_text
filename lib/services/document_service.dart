@@ -4,18 +4,22 @@ import 'package:open_filex/open_filex.dart';
 
 class DocumentService {
   Future<void> saveAsWord(String content, String filename) async {
-    // Get the application's documents directory
-    final directory = await getApplicationDocumentsDirectory();
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final filePath = '${directory.path}/$filename.docx';
+      final file = File(filePath);
 
-    // Construct the file path
-    final filePath = '${directory.path}/$filename.docx';
+      await file.writeAsString(content);
 
-    // Write the content to the file
-    final file = File(filePath);
-    await file.writeAsString(content);
-
-    // Open the file (optional)
-    await OpenFilex.open(filePath);
+      try {
+        await OpenFilex.open(filePath);
+      } catch (e) {
+        print('Error opening file: $e');
+      }
+    } catch (e) {
+      print('Error saving file: $e');
+      rethrow;
+    }
   }
 }
 

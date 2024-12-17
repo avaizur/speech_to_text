@@ -5,18 +5,22 @@ class SpeechRecognitionService {
   bool _isListening = false;
   String _recognizedText = '';
 
-  Future<void> startListening() async {
+  Future<void> startListening({int timeoutSeconds = 60}) async {
     bool available = await _speechToText.initialize(
       onStatus: (status) => print('Speech recognition status: $status'),
       onError: (error) => print('Speech recognition error: $error'),
     );
+
     if (available) {
       _speechToText.listen(onResult: (result) {
         _recognizedText = result.recognizedWords;
       });
       _isListening = true;
+
+      await Future.delayed(Duration(seconds: timeoutSeconds));
+      stopListening();
     } else {
-      print('The user has denied the use of speech recognition.');
+      print('Speech recognition is unavailable. Please check permissions.');
     }
   }
 

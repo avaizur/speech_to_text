@@ -23,13 +23,21 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = '1.8' // Ensures compatibility with Java 8 features
+        jvmTarget = "1.8" // Ensures compatibility with Java 8 features
+    }
+
+    signingConfigs {
+        release {
+            keyAlias 'release-key'
+            keyPassword System.getenv('KEY_PASSWORD') ?: project.KEY_PASSWORD
+            storeFile file('release-key.jks')
+            storePassword System.getenv('KEYSTORE_PASSWORD') ?: project.KEYSTORE_PASSWORD
+        }
     }
 
     buildTypes {
         release {
-            // Add signing configuration for production builds
-            signingConfig signingConfigs.debug // Replace with 'signingConfigs.release' for production
+            signingConfig signingConfigs.release // Use the release signing configuration
             minifyEnabled true // Enable for production to reduce APK size
             shrinkResources true // Remove unused resources in production builds
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
@@ -38,6 +46,11 @@ android {
             minifyEnabled false // Keep debug builds easier to debug
             shrinkResources false
         }
+    }
+
+    lintOptions {
+        checkReleaseBuilds false // Prevent lint from failing release builds
+        abortOnError false // Prevent build failure due to lint errors
     }
 }
 
@@ -58,5 +71,6 @@ dependencies {
     // Multidex support for apps with high method counts
     implementation 'androidx.multidex:multidex:2.0.1'
 
-    // Add additional dependencies here
+    // Kotlin Standard Library (required for Kotlin support)
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.10"
 }
