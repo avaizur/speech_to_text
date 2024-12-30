@@ -5,10 +5,34 @@ packages:
     dependency: "direct main"
     description:
       name: app_links
-      sha256: "42dc15aecf2618ace4ffb74a2e58a50e45cd1b9f2c17c8f0cafe4c297f08c815"
+      sha256: "433df2e61b10519407475d7f69e470789d23d593f28224c38ba1068597be7950"
       url: "https://pub.dev"
     source: hosted
-    version: "4.0.1"
+    version: "6.3.3"
+  app_links_linux:
+    dependency: transitive
+    description:
+      name: app_links_linux
+      sha256: f5f7173a78609f3dfd4c2ff2c95bd559ab43c80a87dc6a095921d96c05688c81
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.3"
+  app_links_platform_interface:
+    dependency: transitive
+    description:
+      name: app_links_platform_interface
+      sha256: "05f5379577c513b534a29ddea68176a4d4802c46180ee8e2e966257158772a3f"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.2"
+  app_links_web:
+    dependency: transitive
+    description:
+      name: app_links_web
+      sha256: af060ed76183f9e2b87510a9480e56a5352b6c249778d07bd2c95fc35632a555
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.4"
   async:
     dependency: "direct main"
     description:
@@ -70,6 +94,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_dotenv:
+    dependency: "direct main"
+    description:
+      name: flutter_dotenv
+      sha256: b7c7be5cd9f6ef7a78429cabd2774d3c4af50e79cb2b7593e3d5d763ef95c61b
+      url: "https://pub.dev"
+    source: hosted
+    version: "5.2.1"
   flutter_test:
     dependency: "direct dev"
     description: flutter
@@ -104,6 +136,38 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.0.2"
+  in_app_purchase:
+    dependency: "direct main"
+    description:
+      name: in_app_purchase
+      sha256: "960f26a08d9351fb8f89f08901f8a829d41b04d45a694b8f776121d9e41dcad6"
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.2.0"
+  in_app_purchase_android:
+    dependency: transitive
+    description:
+      name: in_app_purchase_android
+      sha256: fa1befc0e25374d16ca532154546503f25a865ed6e7ea5641f4f2b75b092d669
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.3.6+12"
+  in_app_purchase_platform_interface:
+    dependency: transitive
+    description:
+      name: in_app_purchase_platform_interface
+      sha256: "1d353d38251da5b9fea6635c0ebfc6bb17a2d28d0e86ea5e083bf64244f1fb4c"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.4.0"
+  in_app_purchase_storekit:
+    dependency: transitive
+    description:
+      name: in_app_purchase_storekit
+      sha256: "250b3865da1f4abf0d0e1eda9556734ee22ab5ebfe47a59227d8d9aeaa1c03e8"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.3.20+2"
   js:
     dependency: transitive
     description:
@@ -172,10 +236,10 @@ packages:
     dependency: "direct main"
     description:
       name: open_filex
-      sha256: ba425ea49affd0a98a234aa9344b9ea5d4c4f7625a1377961eae9fe194c3d523
+      sha256: dcb7bd3d32db8db5260253a62f1564c02c2c8df64bc0187cd213f65f827519bd
       url: "https://pub.dev"
     source: hosted
-    version: "4.5.0"
+    version: "4.6.0"
   path:
     dependency: "direct main"
     description:
