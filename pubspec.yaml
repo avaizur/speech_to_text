@@ -11,7 +11,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  speech_to_text: ^6.6.2 # Keep the existing version for stability
+  speech_to_text: ^7.0.0 # Keep the existing version for stability
   http: ^1.2.2 # Required for PayPal API integration
   path_provider: ^2.0.15
   open_filex: ^4.6.0 # Update to resolvable version
@@ -28,6 +28,7 @@ dependencies:
   url_launcher: ^6.1.11
   in_app_purchase: ^3.0.6 # Google Play Billing integration
   flutter_dotenv: ^5.0.2 # Added for managing environment variables securely
+  rename: ^3.0.2
 
 dev_dependencies:
   flutter_test:
@@ -43,3 +44,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - .env
+

@@ -5,14 +5,14 @@ plugins {
 }
 
 android {
-    namespace = "com.example.lectura"
+    namespace = "com.lectura.app" // Updated to unique namespace
     compileSdk = 34 // Updated to SDK 34 for latest features and APIs
 
     defaultConfig {
-        applicationId = "com.example.lectura" // Unique app ID
+        applicationId = "com.lectura.app" // Updated unique app ID
         minSdk = 21 // Minimum SDK level, compatible with most modern devices
         targetSdk = 34 // Matches compileSdk for best compatibility
-        versionCode = 1
+        versionCode = 3
         versionName = "1.0"
         multiDexEnabled = true // Necessary for apps with a large number of methods
     }

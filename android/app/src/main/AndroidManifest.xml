@@ -9,6 +9,9 @@
     <!-- Microphone permission for speech recognition -->
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
 
+    <!-- Billing permission for Google Play in-app purchases -->
+    <uses-permission android:name="com.android.vending.BILLING"/>
+
     <!-- Exclude unwanted permissions -->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" tools:node="remove"/>
     <uses-permission android:name="android.permission.READ_PHONE_STATE" tools:node="remove"/>
