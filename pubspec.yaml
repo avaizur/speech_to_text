@@ -41,6 +41,12 @@ dev_dependencies:
   stack_trace: ^1.11.1
   test_api: ^0.7.2
   vm_service: ^14.2.5 # Keep downgraded version for compatibility
+  flutter_launcher_icons: ^0.13.1
+
+flutter_icons:
+  android: true
+  ios: false
+  image_path: "assets/icon/lectura_app_logo_512x512_transparent.png"
 
 flutter:
   uses-material-design: true
