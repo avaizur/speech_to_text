@@ -1,0 +1,15 @@
+# sensitive config
+.env
+.env.save
+
+# compiled output
+__pycache__/
+*.pyc
+
+# system files
+.DS_Store
+
+# backup/editor junk
+*.swp
+*.bak
+
