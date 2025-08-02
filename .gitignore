@@ -42,3 +42,49 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 .env
+
+# Flutter build outputs
+build/
+.dart_tool/
+.packages
+.melos_tool/
+.pub-cache/
+.pub/
+
+# Android-specific
+android/.gradle/
+android/local.properties
+*.apk
+*.aab
+
+# iOS-specific (if you ever add iOS)
+**/ios/Flutter/.last_build_id
+ios/Pods/
+ios/Runner.xcworkspace/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+
+# Editor configs
+.vscode/
+.idea/
+*.iml
+*.swp
+
+# Logs and temp
+*.log
+*.tmp
+
+# OS generated
+.DS_Store
+
+# Dependency lock (optional to ignore for tighter control)
+pubspec.lock
+
+# Environment / sensitive
+.env
+*.jks
+
+# Python/venv (if using AI/debug agents or scripts)
+venv/
+__pycache__/
+*.pyc

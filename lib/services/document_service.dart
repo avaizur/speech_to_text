@@ -1,25 +1,43 @@
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_filex/open_filex.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:docx_template/docx_template.dart';
 
 class DocumentService {
-  Future<void> saveAsWord(String content, String filename) async {
-    try {
-      final directory = await getApplicationDocumentsDirectory();
-      final filePath = '${directory.path}/$filename.docx';
-      final file = File(filePath);
+  Future<void> export(String text, String format) async {
+    final dir = await getApplicationDocumentsDirectory();
+    final filename = 'lecture_notes.${format.toLowerCase()}';
+    final filePath = '${dir.path}/$filename';
 
-      await file.writeAsString(content);
+    switch (format.toLowerCase()) {
+      case 'txt':
+        final file = File(filePath);
+        await file.writeAsString(text);
+        break;
 
-      try {
-        await OpenFilex.open(filePath);
-      } catch (e) {
-        print('Error opening file: $e');
-      }
-    } catch (e) {
-      print('Error saving file: $e');
-      rethrow;
+      case 'pdf':
+        final pdf = pw.Document();
+        pdf.addPage(pw.Page(
+          build: (context) => pw.Text(text),
+        ));
+        final file = File(filePath);
+        await file.writeAsBytes(await pdf.save());
+        break;
+
+      case 'docx':
+        final doc = await DocxTemplate.fromAsset('assets/empty.docx');
+        final content = Content();
+        content.add(TextContent("body", text));
+        final file = File(filePath);
+        await file.writeAsBytes(await doc.generate(content) ?? []);
+        break;
+
+      default:
+        throw Exception('Unsupported format: $format');
     }
+
+    await OpenFilex.open(filePath);
   }
 }
 

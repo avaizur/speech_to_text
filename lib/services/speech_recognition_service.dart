@@ -1,34 +1,27 @@
 import 'package:speech_to_text/speech_to_text.dart';
 
 class SpeechRecognitionService {
-  final SpeechToText _speechToText = SpeechToText();
-  bool _isListening = false;
-  String _recognizedText = '';
+  final SpeechToText _speech = SpeechToText();
 
-  Future<void> startListening({int timeoutSeconds = 60}) async {
-    bool available = await _speechToText.initialize(
-      onStatus: (status) => print('Speech recognition status: $status'),
-      onError: (error) => print('Speech recognition error: $error'),
+  Future<void> startListening(Function(String) onResult) async {
+    bool available = await _speech.initialize(
+      onStatus: (status) => print('?? Speech status: $status'),
+      onError: (error) => print('? Speech error: $error'),
     );
 
     if (available) {
-      _speechToText.listen(onResult: (result) {
-        _recognizedText = result.recognizedWords;
-      });
-      _isListening = true;
-
-      await Future.delayed(Duration(seconds: timeoutSeconds));
-      stopListening();
+      _speech.listen(
+        onResult: (result) {
+          onResult(result.recognizedWords);
+        },
+      );
     } else {
-      print('Speech recognition is unavailable. Please check permissions.');
+      print('? Speech recognition not available');
     }
   }
 
   void stopListening() {
-    _speechToText.stop();
-    _isListening = false;
+    _speech.stop();
   }
-
-  String get recognizedText => _recognizedText;
 }
 
