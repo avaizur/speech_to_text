@@ -38,6 +38,7 @@ flutter:
   assets:
     - assets/icon/lectura_app_logo_512x512_transparent.png
     - assets/empty.docx
+    - assets/template.docx
     - .env
 
 
