@@ -1,0 +1,296 @@
+.
+├── .env
+├── .flutter-plugins
+├── .flutter-plugins-dependencies
+├── .gitignore
+├── .metadata
+├── README.md
+├── analysis_options.yaml
+├── android
+│   ├── .gitignore
+│   ├── .gradle
+│   │   ├── 8.1.1
+│   │   │   ├── checksums
+│   │   │   │   ├── md5-checksums.bin
+│   │   │   │   └── sha1-checksums.bin
+│   │   │   ├── dependencies-accessors
+│   │   │   │   └── gc.properties
+│   │   │   ├── executionHistory
+│   │   │   │   └── executionHistory.bin
+│   │   │   ├── fileChanges
+│   │   │   │   └── last-build.bin
+│   │   │   ├── fileHashes
+│   │   │   │   ├── fileHashes.bin
+│   │   │   │   └── resourceHashesCache.bin
+│   │   │   ├── gc.properties
+│   │   │   └── vcsMetadata
+│   │   ├── buildOutputCleanup
+│   │   │   ├── cache.properties
+│   │   │   └── outputFiles.bin
+│   │   ├── file-system.probe
+│   │   ├── kotlin
+│   │   │   └── errors
+│   │   │       ├── errors-1733949062084.log
+│   │   │       ├── errors-1752498311365.log
+│   │   │       └── errors-1753972373534.log
+│   │   └── vcs-1
+│   │       └── gc.properties
+│   ├── .kotlin
+│   │   ├── errors
+│   │   │   ├── errors-1733949062084.log
+│   │   │   ├── errors-1752498311365.log
+│   │   │   └── errors-1753972373533.log
+│   │   └── sessions
+│   ├── app
+│   │   ├── build.gradle
+│   │   ├── release-key.jks
+│   │   └── src
+│   │       ├── debug
+│   │       │   └── AndroidManifest.xml
+│   │       ├── main
+│   │       │   ├── AndroidManifest.xml
+│   │       │   ├── java
+│   │       │   │   ├── com
+│   │       │   │   │   └── example
+│   │       │   │   │       └── lectura
+│   │       │   │   │           └── MainActivity.java
+│   │       │   │   └── io
+│   │       │   │       ├── flutter
+│   │       │   │       │   └── plugins
+│   │       │   │       │       └── GeneratedPluginRegistrant.java
+│   │       │   │       └── lectura
+│   │       │   │           └── app
+│   │       │   │               └── MainActivity.java
+│   │       │   ├── kotlin
+│   │       │   │   └── com
+│   │       │   │       └── example
+│   │       │   │           └── speech_to_text
+│   │       │   │               └── MainActivity.kt
+│   │       │   └── res
+│   │       │       ├── drawable
+│   │       │       │   └── launch_background.xml
+│   │       │       ├── drawable-v21
+│   │       │       │   └── launch_background.xml
+│   │       │       ├── mipmap-hdpi
+│   │       │       │   └── ic_launcher.png
+│   │       │       ├── mipmap-mdpi
+│   │       │       │   └── ic_launcher.png
+│   │       │       ├── mipmap-xhdpi
+│   │       │       │   └── ic_launcher.png
+│   │       │       ├── mipmap-xxhdpi
+│   │       │       │   └── ic_launcher.png
+│   │       │       ├── mipmap-xxxhdpi
+│   │       │       │   └── ic_launcher.png
+│   │       │       ├── values
+│   │       │       │   ├── attrs.xml
+│   │       │       │   ├── strings.xml
+│   │       │       │   └── styles.xml
+│   │       │       ├── values-night
+│   │       │       │   └── styles.xml
+│   │       │       └── xml
+│   │       │           └── network_security_config.xml
+│   │       └── profile
+│   │           └── AndroidManifest.xml
+│   ├── build.gradle
+│   ├── gradle
+│   │   └── wrapper
+│   │       ├── gradle-wrapper.jar
+│   │       └── gradle-wrapper.properties
+│   ├── gradle.properties
+│   ├── gradlew
+│   ├── gradlew.bat
+│   ├── local.properties
+│   └── settings.gradle
+├── assets
+│   ├── empty.docx
+│   ├── icon
+│   │   └── lectura_app_logo_512x512_transparent.png
+│   └── template.docx
+├── ios
+│   ├── .gitignore
+│   ├── Flutter
+│   │   ├── AppFrameworkInfo.plist
+│   │   ├── Debug.xcconfig
+│   │   ├── Generated.xcconfig
+│   │   ├── Release.xcconfig
+│   │   └── flutter_export_environment.sh
+│   ├── Podfile
+│   ├── Runner
+│   │   ├── AppDelegate.swift
+│   │   ├── Assets.xcassets
+│   │   │   ├── AppIcon.appiconset
+│   │   │   │   ├── Contents.json
+│   │   │   │   ├── Icon-App-1024x1024@1x.png
+│   │   │   │   ├── Icon-App-20x20@1x.png
+│   │   │   │   ├── Icon-App-20x20@2x.png
+│   │   │   │   ├── Icon-App-20x20@3x.png
+│   │   │   │   ├── Icon-App-29x29@1x.png
+│   │   │   │   ├── Icon-App-29x29@2x.png
+│   │   │   │   ├── Icon-App-29x29@3x.png
+│   │   │   │   ├── Icon-App-40x40@1x.png
+│   │   │   │   ├── Icon-App-40x40@2x.png
+│   │   │   │   ├── Icon-App-40x40@3x.png
+│   │   │   │   ├── Icon-App-60x60@2x.png
+│   │   │   │   ├── Icon-App-60x60@3x.png
+│   │   │   │   ├── Icon-App-76x76@1x.png
+│   │   │   │   ├── Icon-App-76x76@2x.png
+│   │   │   │   └── Icon-App-83.5x83.5@2x.png
+│   │   │   └── LaunchImage.imageset
+│   │   │       ├── Contents.json
+│   │   │       ├── LaunchImage.png
+│   │   │       ├── LaunchImage@2x.png
+│   │   │       ├── LaunchImage@3x.png
+│   │   │       └── README.md
+│   │   ├── Base.lproj
+│   │   │   ├── LaunchScreen.storyboard
+│   │   │   └── Main.storyboard
+│   │   ├── GeneratedPluginRegistrant.h
+│   │   ├── GeneratedPluginRegistrant.m
+│   │   ├── Info.plist
+│   │   └── Runner-Bridging-Header.h
+│   ├── Runner.xcodeproj
+│   │   ├── project.pbxproj
+│   │   ├── project.xcworkspace
+│   │   │   ├── contents.xcworkspacedata
+│   │   │   └── xcshareddata
+│   │   │       ├── IDEWorkspaceChecks.plist
+│   │   │       └── WorkspaceSettings.xcsettings
+│   │   └── xcshareddata
+│   │       └── xcschemes
+│   │           └── Runner.xcscheme
+│   ├── Runner.xcworkspace
+│   │   ├── contents.xcworkspacedata
+│   │   └── xcshareddata
+│   │       ├── IDEWorkspaceChecks.plist
+│   │       └── WorkspaceSettings.xcsettings
+│   └── RunnerTests
+│       └── RunnerTests.swift
+├── lectura_structure.txt
+├── lib
+│   ├── Process
+│   ├── Run
+│   ├── home_screen.dart
+│   ├── main.dart
+│   ├── main.dart.bak
+│   ├── screens
+│   │   ├── auth_screen.dart
+│   │   ├── google
+│   │   │   └── purchase_screen.dart
+│   │   ├── home_screen.dart
+│   │   ├── in_app_payment_screen.dart
+│   │   └── paypal
+│   │       └── purchase_screen.dart
+│   ├── services
+│   │   ├── ai_service.dart
+│   │   ├── auth_service.dart
+│   │   ├── document_service.dart
+│   │   ├── google_billing_service.dart
+│   │   ├── in_app_purchase_service.dart
+│   │   ├── paypal_service.dart
+│   │   └── speech_recognition_service.dart
+│   └── widgets
+├── linux
+│   ├── .gitignore
+│   ├── CMakeLists.txt
+│   ├── flutter
+│   │   ├── CMakeLists.txt
+│   │   ├── ephemeral
+│   │   │   └── .plugin_symlinks
+│   │   │       ├── path_provider_linux -> /home/ubuntu/.pub-cache/hosted/pub.dev/path_provider_linux-2.2.1/
+│   │   │       └── url_launcher_linux -> /home/ubuntu/.pub-cache/hosted/pub.dev/url_launcher_linux-3.2.1/
+│   │   ├── generated_plugin_registrant.cc
+│   │   ├── generated_plugin_registrant.h
+│   │   └── generated_plugins.cmake
+│   ├── main.cc
+│   ├── my_application.cc
+│   └── my_application.h
+├── macos
+│   ├── .gitignore
+│   ├── Flutter
+│   │   ├── Flutter-Debug.xcconfig
+│   │   ├── Flutter-Release.xcconfig
+│   │   ├── GeneratedPluginRegistrant.swift
+│   │   └── ephemeral
+│   │       ├── Flutter-Generated.xcconfig
+│   │       └── flutter_export_environment.sh
+│   ├── Runner
+│   │   ├── AppDelegate.swift
+│   │   ├── Assets.xcassets
+│   │   │   └── AppIcon.appiconset
+│   │   │       ├── Contents.json
+│   │   │       ├── app_icon_1024.png
+│   │   │       ├── app_icon_128.png
+│   │   │       ├── app_icon_16.png
+│   │   │       ├── app_icon_256.png
+│   │   │       ├── app_icon_32.png
+│   │   │       ├── app_icon_512.png
+│   │   │       └── app_icon_64.png
+│   │   ├── Base.lproj
+│   │   │   └── MainMenu.xib
+│   │   ├── Configs
+│   │   │   ├── AppInfo.xcconfig
+│   │   │   ├── Debug.xcconfig
+│   │   │   ├── Release.xcconfig
+│   │   │   └── Warnings.xcconfig
+│   │   ├── DebugProfile.entitlements
+│   │   ├── Info.plist
+│   │   ├── MainFlutterWindow.swift
+│   │   └── Release.entitlements
+│   ├── Runner.xcodeproj
+│   │   ├── project.pbxproj
+│   │   ├── project.xcworkspace
+│   │   │   └── xcshareddata
+│   │   │       └── IDEWorkspaceChecks.plist
+│   │   └── xcshareddata
+│   │       └── xcschemes
+│   │           └── Runner.xcscheme
+│   ├── Runner.xcworkspace
+│   │   ├── contents.xcworkspacedata
+│   │   └── xcshareddata
+│   │       └── IDEWorkspaceChecks.plist
+│   └── RunnerTests
+│       └── RunnerTests.swift
+├── pubspec.yaml
+├── screens
+├── test
+│   ├── integration_test
+│   │   └── app_test.dart
+│   └── widget_test.dart
+├── web
+│   ├── favicon.png
+│   ├── icons
+│   │   ├── Icon-192.png
+│   │   ├── Icon-512.png
+│   │   ├── Icon-maskable-192.png
+│   │   └── Icon-maskable-512.png
+│   ├── index.html
+│   └── manifest.json
+├── widgets
+└── windows
+    ├── .gitignore
+    ├── CMakeLists.txt
+    ├── flutter
+    │   ├── CMakeLists.txt
+    │   ├── ephemeral
+    │   │   └── .plugin_symlinks
+    │   │       ├── path_provider_windows -> /home/ubuntu/.pub-cache/hosted/pub.dev/path_provider_windows-2.3.0/
+    │   │       └── url_launcher_windows -> /home/ubuntu/.pub-cache/hosted/pub.dev/url_launcher_windows-3.1.4/
+    │   ├── generated_plugin_registrant.cc
+    │   ├── generated_plugin_registrant.h
+    │   └── generated_plugins.cmake
+    └── runner
+        ├── CMakeLists.txt
+        ├── Runner.rc
+        ├── flutter_window.cpp
+        ├── flutter_window.h
+        ├── main.cpp
+        ├── resource.h
+        ├── resources
+        │   └── app_icon.ico
+        ├── runner.exe.manifest
+        ├── utils.cpp
+        ├── utils.h
+        ├── win32_window.cpp
+        └── win32_window.h
+
+107 directories, 187 files
