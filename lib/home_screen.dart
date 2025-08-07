@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:lectura/services/paypal_service.dart';
 import 'package:lectura/services/speech_recognition_service.dart';
@@ -17,11 +18,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
   bool _isListening = false;
   String _transcribedText = '';
+  Timer? _recordingTimer;
 
   void _startTranscription() async {
     setState(() {
       _isListening = true;
       _transcribedText = '';
+    });
+
+    _recordingTimer = Timer(const Duration(hours: 1), () {
+      _stopTranscription();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("?? 1 hour reached. Recording stopped.")),
+      );
     });
 
     await _speechService.startListening((result) {
@@ -32,6 +41,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _stopTranscription() {
+    _recordingTimer?.cancel();
     _speechService.stopListening();
     setState(() {
       _isListening = false;
@@ -46,10 +56,35 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
+    final filenameController = TextEditingController();
+
+    final fileName = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Enter file name'),
+        content: TextField(
+          controller: filenameController,
+          decoration: const InputDecoration(hintText: "e.g. lecture_notes"),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, null),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, filenameController.text),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    if (fileName == null || fileName.trim().isEmpty) return;
+
     try {
-      await _documentService.export(_transcribedText, format);
+      await _documentService.export(_transcribedText, format, fileName);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Exported as .$format")),
+        SnackBar(content: Text("Exported as $fileName.$format")),
       );
     } catch (e) {
       print("? Export failed: $e");

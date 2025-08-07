@@ -1,3 +1,4 @@
+
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_filex/open_filex.dart';
@@ -5,10 +6,10 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:docx_template/docx_template.dart';
 
 class DocumentService {
-  Future<void> export(String text, String format) async {
+  Future<void> export(String text, String format, String filename) async {
     final dir = await getApplicationDocumentsDirectory();
-    final filename = 'lecture_notes.${format.toLowerCase()}';
-    final filePath = '${dir.path}/$filename';
+    final safeName = filename.trim().isEmpty ? 'lecture_notes' : filename.trim();
+    final filePath = '${dir.path}/$safeName.${format.toLowerCase()}';
 
     switch (format.toLowerCase()) {
       case 'txt':
@@ -40,4 +41,3 @@ class DocumentService {
     await OpenFilex.open(filePath);
   }
 }
-
