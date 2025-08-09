@@ -1,7 +1,9 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:lectura/services/speech_recognition_service.dart';
-import 'package:lectura/services/document_service.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import 'services/speech_recognition_service.dart';
+import 'services/document_service.dart';
+import 'services/paypal_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -13,111 +15,102 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final SpeechRecognitionService _speechService = SpeechRecognitionService();
   final DocumentService _documentService = DocumentService();
-
-  bool _isListening = false;
-  String _transcribedText = '';
-  Timer? _recordingTimer;
+  final PayPalService _payPalService = PayPalService();
   final ScrollController _scrollController = ScrollController();
 
-  // Layout constants (DO NOT MODIFY)
-  static const double _textContainerHeight = 300; // Fixed height
-  static const Duration _recordingLimit = Duration(hours: 1);
-  static const EdgeInsets _screenPadding = EdgeInsets.all(16);
+  String _transcript = '';
+  bool _isListening = false;
 
   @override
   void dispose() {
-    _recordingTimer?.cancel();
     _scrollController.dispose();
     super.dispose();
   }
 
-  Future<void> _startTranscription() async {
+  void _appendTranscript(String text) {
     setState(() {
-      _isListening = true;
-      _transcribedText = '';
+      _transcript += (text.isNotEmpty ? '$text ' : '');
     });
 
-    _recordingTimer = Timer(_recordingLimit, _handleAutoStop);
-
-    await _speechService.startListening((result) {
-      setState(() => _transcribedText = result);
-      _scrollToBottom();
-    });
-  }
-
-  void _scrollToBottom() {
+    // Keep latest text in view (auto-scroll to bottom)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
+        _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
       }
     });
   }
 
-  Future<void> _handleAutoStop() async {
-    await _stopTranscription();
-    await _autoSaveRecording();
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("? 1-hour limit reached. Auto-saved.")),
-    );
+  Future<void> _toggleListening() async {
+    if (_isListening) {
+      await _speechService.stopListening();
+      setState(() => _isListening = false);
+    } else {
+      final ok = await _speechService.initSpeech();
+      if (!ok) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Speech not available')),
+        );
+        return;
+      }
+      await _speechService.startListening(_appendTranscript);
+      setState(() => _isListening = true);
+    }
   }
 
-  Future<void> _stopTranscription() async {
-    _recordingTimer?.cancel();
-    _speechService.stopListening();
-    if (mounted) setState(() => _isListening = false);
-  }
-
-  Future<void> _autoSaveRecording() async {
-    if (_transcribedText.isEmpty) return;
-    final filename = 'Recording_${DateTime.now().toIso8601String().replaceAll(RegExp(r'[:.]'), '-')}';
-    await _documentService.export(_transcribedText, 'docx', filename);
-  }
-
-  Future<void> _exportText(String format) async {
-    final defaultName = 'Note_${DateTime.now().toString().replaceAll(RegExp(r'[^\d]'), '').substring(0, 8)}';
-    final fileName = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Save As'),
-        content: TextField(
-          controller: TextEditingController(text: defaultName),
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
-            hintText: "e.g. Lecture_Notes",
-          ),
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, 
-                (ModalRoute.of(context)!.settings.arguments as TextEditingController).text.trim()),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-
-    if (fileName == null || fileName.isEmpty) return;
-
-    try {
-      await _documentService.export(_transcribedText, format, fileName);
+  Future<void> _export(String type) async {
+    if (_transcript.trim().isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('? Saved as $fileName.$format')),
+        const SnackBar(content: Text('No text to export')),
       );
+      return;
+    }
+    await _documentService.exportTranscript(type, _transcript);
+  }
+
+  // ---- Helper to safely extract the approval URL from various PayPal responses
+  String? _extractApprovalUrl(dynamic approval) {
+    if (approval is String) return approval;
+
+    if (approval is Map) {
+      if (approval['href'] is String) return approval['href'] as String;
+      if (approval['approvalUrl'] is String) return approval['approvalUrl'] as String;
+
+      // Some responses return a list of links with rel labels
+      final links = approval['links'];
+      if (links is List) {
+        for (final item in links) {
+          if (item is Map &&
+              item['href'] is String &&
+              (item['rel'] == 'approve' || item['rel'] == 'approval_url')) {
+            return item['href'] as String;
+          }
+        }
+      }
+    }
+
+    return null;
+  }
+
+  Future<void> _createOrder(double amount) async {
+    try {
+      final approval = await _payPalService.createOrder(amount);
+      final link = _extractApprovalUrl(approval);
+
+      if (link == null || link.isEmpty) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Invalid PayPal approval URL')),
+        );
+        return;
+      }
+
+      await launchUrl(Uri.parse(link), mode: LaunchMode.externalApplication);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('? Error: ${e.toString()}')),
+        SnackBar(content: Text('PayPal error: $e')),
       );
     }
   }
@@ -126,50 +119,81 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Lectura'),
-        actions: [
-          if (_isListening)
-            IconButton(
-              icon: const Icon(Icons.emergency, color: Colors.red),
-              onPressed: _handleAutoStop,
-              tooltip: 'Emergency Stop',
-            ),
-        ],
+        title: const Text('Lectura App'),
+        backgroundColor: Colors.deepPurple,
       ),
       body: Padding(
-        padding: _screenPadding,
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // 1. Fixed Top Button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                icon: Icon(_isListening ? Icons.stop : Icons.mic),
-                label: Text(_isListening ? 'STOP RECORDING' : 'START RECORDING'),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: _isListening ? Colors.red : Colors.blue,
-                  foregroundColor: Colors.white,
-                ),
-                onPressed: _isListening ? _stopTranscription : _startTranscription,
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // 2. Fixed-Height Scrollable Container
-            Container(
-              height: _textContainerHeight, // Critical fixed height
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade400),
-                borderRadius: BorderRadius.circular(8),
-              ),
+            // Transcript area (grows inside scroll, controls stay visible)
+            Expanded(
               child: SingleChildScrollView(
                 controller: _scrollController,
-                padding: const EdgeInsets.all(12),
-                child: SelectableText(
-                  _transcribedText.isEmpty
-                      ? 'Transcription will appear here...'
-                      : _transcribedText,
+                child: Text(
+                  _transcript.isEmpty ? 'Transcript will appear here...' : _transcript,
                   style: const TextStyle(fontSize: 16),
                 ),
+              ),
+            ),
+            const SizedBox(height: 10),
+
+            // Mic control
+            FilledButton.icon(
+              icon: Icon(_isListening ? Icons.mic_off : Icons.mic),
+              label: Text(_isListening ? 'STOP' : 'START MIC'),
+              style: FilledButton.styleFrom(
+                backgroundColor: _isListening ? Colors.red : Colors.green,
+              ),
+              onPressed: _toggleListening,
+            ),
+            const SizedBox(height: 12),
+
+            // Export buttons
+            Wrap(
+              spacing: 10,
+              runSpacing: 8,
+              alignment: WrapAlignment.center,
+              children: [
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.text_snippet),
+                  label: const Text('TXT'),
+                  onPressed: () => _export('TXT'),
+                ),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.picture_as_pdf),
+                  label: const Text('PDF'),
+                  onPressed: () => _export('PDF'),
+                ),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.description),
+                  label: const Text('DOCX'),
+                  onPressed: () => _export('DOCX'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // PayPal + Google
+            Wrap(
+              spacing: 10,
+              children: [
+                FilledButton(
+                  onPressed: () => _createOrder(10.00),
+                  child: const Text('PayPal'),
+                ),
+                OutlinedButton(
+                  onPressed: () => launchUrl(
+                    Uri.parse('https://www.google.com'),
+                    mode: LaunchMode.externalApplication,
+                  ),
+                  child: const Text('Test Google'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

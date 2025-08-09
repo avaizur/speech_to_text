@@ -1,84 +1,66 @@
 import 'package:speech_to_text/speech_to_text.dart';
-import 'package:speech_to_text/speech_recognition_result.dart';
-import 'package:speech_to_text/listen_mode.dart';
 
 class SpeechRecognitionService {
   final SpeechToText _speech = SpeechToText();
-  bool _shouldContinue = false;
-  String _fullTranscript = '';
-  Function(String)? _onResultCallback;
+  bool _isListening = false;
+  String _lastRecognized = '';
+  Function(String)? _onResult;
 
-  Future<void> startListening(Function(String) onResult) async {
-    _fullTranscript = '';
-    _onResultCallback = onResult;
-
+  /// Initialize the speech recognition engine
+  Future<bool> initSpeech() async {
     bool available = await _speech.initialize(
       onStatus: (status) {
-        print('??? Speech status: $status');
-
-        if (status == 'done' || status == 'notListening') {
-          if (_shouldContinue) {
-            Future.delayed(const Duration(milliseconds: 500), () {
-              _restartListening();
-            });
-          }
+        // Auto-restart if stopped but should still be listening
+        if (status == 'done' && _isListening) {
+          _restartListening();
         }
       },
       onError: (error) {
-        print('? Speech error: $error');
-        if (_shouldContinue &&
-            (error.errorMsg.contains('7') || // Network error
-             error.permanent == false)) {
-          // Attempt auto-restart after error
-          Future.delayed(const Duration(seconds: 1), () {
-            _restartListening();
-          });
+        // Try to restart after an error (like audio focus loss)
+        if (_isListening) {
+          _restartListening();
         }
       },
     );
-
-    if (available) {
-      _shouldContinue = true;
-      _listen();
-    } else {
-      print('? Speech recognition not available');
-    }
+    return available;
   }
 
-  void _listen() {
-    _speech.listen(
-      onResult: (SpeechRecognitionResult result) {
-        final text = result.recognizedWords.trim();
-
-        if (text.contains(RegExp(r'\bhttps?://\S+\b'))) {
-          print('?? URL Mentioned!');
+  /// Start listening for speech
+  Future<void> startListening(Function(String) onResult) async {
+    _onResult = onResult;
+    _isListening = true;
+    await _speech.listen(
+      onResult: (result) {
+        if (result.finalResult) {
+          _lastRecognized = result.recognizedWords;
         }
-        if (text.contains('chapter') || text.contains('book')) {
-          print('?? Book Reference Detected!');
-        }
-
-        if (result.finalResult && text.isNotEmpty) {
-          _fullTranscript += '\n\n$text';
-        } else {
-          _fullTranscript = _fullTranscript.replaceAll(RegExp(r'\n\n$'), '');
-          _fullTranscript += ' $text';
-        }
-
-        _onResultCallback?.call(_fullTranscript.trim());
+        _onResult?.call(result.recognizedWords);
       },
-      listenMode: ListenMode.dictation,
+      pauseFor: const Duration(seconds: 6), // tolerate short pauses
+      listenFor: const Duration(hours: 1), // long sessions
       partialResults: true,
       cancelOnError: false,
     );
   }
 
-  void _restartListening() {
-    if (!_speech.isAvailable || !_shouldContinue) return;
-    _listen();
+  /// Stop listening
+  Future<void> stopListening() async {
+    _isListening = false;
+    await _speech.stop();
   }
 
-  void stopListening() {
-    _shouldContinue = false;
-    _speech.stop();
+  /// Returns whether the service is actively listening
+  bool isListening() {
+    return _isListening;
+  }
+
+  /// Internal: restart listening after a pause or interruption
+  void _restartListening() async {
+    if (!_isListening) return;
+    await _speech.stop();
+    await Future.delayed(const Duration(milliseconds: 200));
+    if (_onResult != null) {
+      await startListening(_onResult!);
+    }
   }
 }
