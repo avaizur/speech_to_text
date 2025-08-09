@@ -1,66 +1,77 @@
-import 'package:speech_to_text/speech_to_text.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:flutter/material.dart';
 
 class SpeechRecognitionService {
-  final SpeechToText _speech = SpeechToText();
+  final stt.SpeechToText _speech = stt.SpeechToText();
   bool _isListening = false;
   String _lastRecognized = '';
-  Function(String)? _onResult;
+  String _fullTranscript = '';
+  DateTime _lastSpeechTime = DateTime.now();
 
-  /// Initialize the speech recognition engine
-  Future<bool> initSpeech() async {
-    bool available = await _speech.initialize(
+  final ValueNotifier<String> transcriptNotifier = ValueNotifier<String>("");
+
+  Future<void> initSpeech() async {
+    await _speech.initialize(
       onStatus: (status) {
-        // Auto-restart if stopped but should still be listening
-        if (status == 'done' && _isListening) {
-          _restartListening();
+        debugPrint("Speech status: $status");
+        if (status == "notListening" && _isListening) {
+          // Restart listening to keep it continuous
+          _startListening();
         }
       },
       onError: (error) {
-        // Try to restart after an error (like audio focus loss)
-        if (_isListening) {
-          _restartListening();
-        }
+        debugPrint("Speech error: $error");
       },
     );
-    return available;
   }
 
-  /// Start listening for speech
-  Future<void> startListening(Function(String) onResult) async {
-    _onResult = onResult;
+  void startListening() {
+    if (!_isListening) {
+      _fullTranscript = '';
+      transcriptNotifier.value = '';
+      _startListening();
+    }
+  }
+
+  void _startListening() {
     _isListening = true;
-    await _speech.listen(
+    _speech.listen(
       onResult: (result) {
         if (result.finalResult) {
-          _lastRecognized = result.recognizedWords;
+          String newText = result.recognizedWords.trim();
+
+          if (newText.isNotEmpty && newText != _lastRecognized) {
+            final now = DateTime.now();
+            final pauseDuration = now.difference(_lastSpeechTime).inMilliseconds;
+
+            // Paragraph break if pause > 2000 ms
+            if (pauseDuration > 2000 && _fullTranscript.isNotEmpty) {
+              _fullTranscript += "\n\n";
+            }
+
+            _fullTranscript +=
+                (_fullTranscript.isEmpty ? "" : " ") + newText;
+            transcriptNotifier.value = _fullTranscript;
+            _lastRecognized = newText;
+            _lastSpeechTime = now;
+          }
         }
-        _onResult?.call(result.recognizedWords);
       },
-      pauseFor: const Duration(seconds: 6), // tolerate short pauses
-      listenFor: const Duration(hours: 1), // long sessions
+      listenFor: const Duration(minutes: 5),
+      pauseFor: const Duration(seconds: 30),
       partialResults: true,
+      localeId: 'en_US',
       cancelOnError: false,
     );
   }
 
-  /// Stop listening
-  Future<void> stopListening() async {
+  void stopListening() {
+    _speech.stop();
     _isListening = false;
-    await _speech.stop();
   }
 
-  /// Returns whether the service is actively listening
-  bool isListening() {
-    return _isListening;
-  }
-
-  /// Internal: restart listening after a pause or interruption
-  void _restartListening() async {
-    if (!_isListening) return;
-    await _speech.stop();
-    await Future.delayed(const Duration(milliseconds: 200));
-    if (_onResult != null) {
-      await startListening(_onResult!);
-    }
+  void cancelListening() {
+    _speech.cancel();
+    _isListening = false;
   }
 }
