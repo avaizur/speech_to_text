@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'services/speech_recognition_service.dart';
 import 'services/document_service.dart';
 import 'services/paypal_service.dart';
+import 'services/text_formatter.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,19 +21,27 @@ class _HomeScreenState extends State<HomeScreen> {
   final ScrollController _scrollController = ScrollController();
 
   bool _isListening = false;
+  bool _cleanView = false; // <— Clean View toggle
 
   @override
   void initState() {
     super.initState();
     _speechService.initSpeech();
     _speechService.transcriptNotifier.addListener(_scrollToBottom);
-    _speechService.partialNotifier.addListener(_scrollToBottom);
+    // If your service exposes partials:
+    try {
+      // ignore: invalid_use_of_protected_member
+      _speechService.partialNotifier.addListener(_scrollToBottom);
+    } catch (_) {}
   }
 
   @override
   void dispose() {
     _speechService.transcriptNotifier.removeListener(_scrollToBottom);
-    _speechService.partialNotifier.removeListener(_scrollToBottom);
+    try {
+      // ignore: invalid_use_of_protected_member
+      _speechService.partialNotifier.removeListener(_scrollToBottom);
+    } catch (_) {}
     _scrollController.dispose();
     super.dispose();
   }
@@ -61,12 +70,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _export(String type) async {
     final full = _speechService.transcriptNotifier.value.trim();
-    final partial = _speechService.partialNotifier.value.trim();
-    final text = (full.isEmpty && partial.isEmpty)
+    String partial = '';
+    try {
+      partial = _speechService.partialNotifier.value.trim();
+    } catch (_) {}
+    final combined = (full.isEmpty && partial.isEmpty)
         ? ''
         : (partial.isEmpty ? full : '$full $partial');
 
-    if (text.isEmpty) {
+    if (combined.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No text to export')),
@@ -74,36 +86,29 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    await _documentService.exportTranscript(type, text);
+    await _documentService.exportTranscript(type, combined);
   }
 
-  // Patched version with .env check
-  Future<void> _upgradeToPro() async {
+  Future<void> _upgradeToPro({String plan = 'monthly'}) async {
     try {
-      // On-device .env health check (no secrets shown)
+      final env = (dotenv.env['PAYPAL_ENV'] ?? '').isNotEmpty;
       final hasId = (dotenv.env['PAYPAL_CLIENT_ID'] ?? '').isNotEmpty;
       final hasSecret = (dotenv.env['PAYPAL_CLIENT_SECRET'] ?? '').isNotEmpty;
-      if (!hasId || !hasSecret) {
+      if (!env || !hasId || !hasSecret) {
         if (!mounted) return;
+        final missing = [
+          if (!env) 'PAYPAL_ENV',
+          if (!hasId) 'PAYPAL_CLIENT_ID',
+          if (!hasSecret) 'PAYPAL_CLIENT_SECRET',
+        ].join(', ');
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('PayPal not configured: missing client credentials (.env).')),
+          SnackBar(content: Text('PayPal not configured: missing $missing')),
         );
         return;
       }
 
-      final approvalUrl = await _payPalService.createOrder();
-      if (approvalUrl.isEmpty) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('PayPal: No approval URL returned')),
-        );
-        return;
-      }
-
-      final ok = await launchUrl(
-        Uri.parse(approvalUrl),
-        mode: LaunchMode.externalApplication,
-      );
+      final approvalUrl = await _payPalService.createOrder(plan: plan);
+      final ok = await launchUrl(Uri.parse(approvalUrl), mode: LaunchMode.externalApplication);
       if (!ok && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Could not launch PayPal approval URL')),
@@ -112,7 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('PayPal error: ${e.toString()}')),
+        SnackBar(content: Text('PayPal error: $e')),
       );
     }
   }
@@ -128,34 +133,28 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildTranscript(String finalized, String livePartial) {
-    final spans = <TextSpan>[];
+    // Render based on Clean View toggle
+    final raw = livePartial.isNotEmpty ? '$finalized $livePartial' : finalized;
+    final display = _cleanView ? TextFormatter.polish(raw) : raw;
 
-    if (finalized.isNotEmpty) {
-      final parts = finalized.split('\n\n');
-      for (int i = 0; i < parts.length; i++) {
-        if (parts[i].isEmpty) continue;
-        spans.add(TextSpan(text: parts[i]));
-        if (i < parts.length - 1) {
-          spans.add(const TextSpan(text: '\n\n'));
-        }
-      }
-    }
-
-    if (livePartial.isNotEmpty) {
-      if (spans.isNotEmpty) spans.add(const TextSpan(text: ' '));
-      spans.add(
-        TextSpan(
-          text: livePartial,
-          style: const TextStyle(
-            fontStyle: FontStyle.italic,
-            color: Colors.grey,
+    // Show partial in grey/italic ONLY in live (non-clean) mode
+    if (!_cleanView && livePartial.isNotEmpty) {
+      final base = finalized.isEmpty ? '' : '$finalized ';
+      return SelectableText.rich(
+        TextSpan(children: [
+          TextSpan(text: base),
+          TextSpan(
+            text: livePartial,
+            style: const TextStyle(fontStyle: FontStyle.italic, color: Colors.grey),
           ),
-        ),
+        ]),
+        style: const TextStyle(fontSize: 16, height: 1.4),
       );
     }
 
-    return SelectableText.rich(
-      TextSpan(children: spans),
+    // Clean view or no partials: normal text
+    return SelectableText(
+      display,
       style: const TextStyle(fontSize: 16, height: 1.4),
     );
   }
@@ -166,6 +165,11 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('Lectura'),
         actions: [
+          IconButton(
+            tooltip: _cleanView ? 'Switch to Live View' : 'Switch to Clean View',
+            icon: Icon(_cleanView ? Icons.cleaning_services : Icons.remove_red_eye),
+            onPressed: () => setState(() => _cleanView = !_cleanView),
+          ),
           if (_isListening)
             IconButton(
               tooltip: 'Stop Recording',
@@ -178,7 +182,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ? FloatingActionButton.extended(
               onPressed: _stopMic,
               icon: const Icon(Icons.mic),
-              label: const Text('Listening Tap to stop'),
+              label: const Text('Listening… Tap to stop'),
             )
           : null,
       body: Padding(
@@ -189,8 +193,19 @@ class _HomeScreenState extends State<HomeScreen> {
               child: ValueListenableBuilder<String>(
                 valueListenable: _speechService.transcriptNotifier,
                 builder: (context, finalized, _) {
+                  ValueListenable<String>? partialLn;
+                  try {
+                    partialLn = _speechService.partialNotifier;
+                  } catch (_) {}
+                  if (partialLn == null) {
+                    return SingleChildScrollView(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.all(12),
+                      child: _buildTranscript(finalized, ''),
+                    );
+                  }
                   return ValueListenableBuilder<String>(
-                    valueListenable: _speechService.partialNotifier,
+                    valueListenable: partialLn,
                     builder: (context, partial, __) {
                       return SingleChildScrollView(
                         controller: _scrollController,
@@ -229,8 +244,18 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 OutlinedButton.icon(
                   icon: const Icon(Icons.workspace_premium),
-                  label: const Text('Upgrade to Pro'),
-                  onPressed: _upgradeToPro,
+                  label: const Text('Upgrade (Monthly)'),
+                  onPressed: () => _upgradeToPro(plan: 'monthly'),
+                ),
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.calendar_month),
+                  label: const Text('Upgrade (Yearly)'),
+                  onPressed: () => _upgradeToPro(plan: 'yearly'),
+                ),
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.bolt),
+                  label: const Text('Pay as you go'),
+                  onPressed: () => _upgradeToPro(plan: 'payg'),
                 ),
                 OutlinedButton.icon(
                   icon: const Icon(Icons.public),
