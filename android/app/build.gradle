@@ -1,29 +1,44 @@
 plugins {
-    id "com.android.application"
-    id "kotlin-android"
-    id "dev.flutter.flutter-gradle-plugin" // Flutter plugin must follow Android and Kotlin
+    id 'com.android.application'
+    id 'kotlin-android'
+    id 'dev.flutter.flutter-gradle-plugin'
 }
 
-android {
-    namespace = "com.lectura.app" // Updated to unique namespace
-    compileSdk = 34 // Updated to SDK 34 for latest features and APIs
-
-    defaultConfig {
-        applicationId = "com.lectura.app" // Updated unique app ID
-        minSdk = 21 // Minimum SDK level, compatible with most modern devices
-        targetSdk = 34 // Matches compileSdk for best compatibility
-        versionCode = 3
-        versionName = "1.0"
-        multiDexEnabled = true // Necessary for apps with a large number of methods
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withReader('UTF-8') { reader ->
+        localProperties.load(reader)
     }
+}
+
+def flutterVersionCode = localProperties.getProperty('flutter.versionCode') ?: '1'
+def flutterVersionName = localProperties.getProperty('flutter.versionName') ?: '1.0'
+
+android {
+    namespace 'com.lectura.app'
+    compileSdkVersion 34
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
     }
 
     kotlinOptions {
-        jvmTarget = "1.8" // Ensures compatibility with Java 8 features
+        jvmTarget = '11'
+    }
+
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+    }
+
+    defaultConfig {
+        applicationId 'com.lectura.app'
+        minSdkVersion 21
+        targetSdkVersion 34
+        versionCode flutterVersionCode.toInteger()
+        versionName flutterVersionName
+        multiDexEnabled true
     }
 
     signingConfigs {
@@ -37,40 +52,32 @@ android {
 
     buildTypes {
         release {
-            signingConfig signingConfigs.release // Use the release signing configuration
-            minifyEnabled true // Enable for production to reduce APK size
-            shrinkResources true // Remove unused resources in production builds
+            signingConfig signingConfigs.release
+            minifyEnabled false
+            shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {
-            minifyEnabled false // Keep debug builds easier to debug
+            minifyEnabled false
             shrinkResources false
         }
     }
 
     lintOptions {
-        checkReleaseBuilds false // Prevent lint from failing release builds
-        abortOnError false // Prevent build failure due to lint errors
+        checkReleaseBuilds false
+        abortOnError false
     }
 }
 
 flutter {
-    source = "../.." // Points to the root of the Flutter project
+    source '../..'
 }
 
 dependencies {
-    // Core Android libraries
-    implementation "androidx.core:core-ktx:1.13.1"
-    implementation "androidx.appcompat:appcompat:1.6.1"
-    implementation "com.google.android.material:material:1.9.0"
-    implementation "androidx.constraintlayout:constraintlayout:2.1.4"
-
-    // Google Play Services for authentication and related services
-    implementation "com.google.android.gms:play-services-auth:20.5.0"
-
-    // Multidex support for apps with high method counts
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.22"
+    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.11.0'
     implementation 'androidx.multidex:multidex:2.0.1'
-
-    // Kotlin Standard Library (required for Kotlin support)
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.10"
+    implementation 'com.google.android.gms:play-services-auth:20.7.0'
 }
