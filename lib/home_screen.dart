@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'services/speech_recognition_service.dart';
@@ -25,11 +26,13 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _speechService.initSpeech();
     _speechService.transcriptNotifier.addListener(_scrollToBottom);
+    _speechService.partialNotifier.addListener(_scrollToBottom);
   }
 
   @override
   void dispose() {
     _speechService.transcriptNotifier.removeListener(_scrollToBottom);
+    _speechService.partialNotifier.removeListener(_scrollToBottom);
     _scrollController.dispose();
     super.dispose();
   }
@@ -57,7 +60,12 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _export(String type) async {
-    final text = _speechService.transcriptNotifier.value.trim();
+    final full = _speechService.transcriptNotifier.value.trim();
+    final partial = _speechService.partialNotifier.value.trim();
+    final text = (full.isEmpty && partial.isEmpty)
+        ? ''
+        : (partial.isEmpty ? full : '$full $partial');
+
     if (text.isEmpty) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -65,111 +73,139 @@ class _HomeScreenState extends State<HomeScreen> {
       );
       return;
     }
-    // Uses your existing exportTranscript(type, text)
+
     await _documentService.exportTranscript(type, text);
   }
 
-  String? _extractApprovalUrl(dynamic approval) {
-    if (approval is String) return approval;
-    if (approval is Map) {
-      if (approval['href'] is String) return approval['href'] as String;
-      if (approval['approvalUrl'] is String) return approval['approvalUrl'] as String;
-      final links = approval['links'];
-      if (links is List) {
-        for (final item in links) {
-          if (item is Map &&
-              item['href'] is String &&
-              (item['rel'] == 'approve' || item['rel'] == 'approval_url')) {
-            return item['href'] as String;
-          }
-        }
-      }
-    }
-    return null;
-  }
-
-  Future<void> _createOrder(double amount) async {
+  // Patched version with .env check
+  Future<void> _upgradeToPro() async {
     try {
-      final approval = await _payPalService.createOrder(amount);
-      final link = _extractApprovalUrl(approval);
-      if (link == null || link.isEmpty) {
+      // On-device .env health check (no secrets shown)
+      final hasId = (dotenv.env['PAYPAL_CLIENT_ID'] ?? '').isNotEmpty;
+      final hasSecret = (dotenv.env['PAYPAL_CLIENT_SECRET'] ?? '').isNotEmpty;
+      if (!hasId || !hasSecret) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Invalid PayPal approval URL')),
+          const SnackBar(content: Text('PayPal not configured: missing client credentials (.env).')),
         );
         return;
       }
-      await launchUrl(Uri.parse(link), mode: LaunchMode.externalApplication);
+
+      final approvalUrl = await _payPalService.createOrder();
+      if (approvalUrl.isEmpty) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('PayPal: No approval URL returned')),
+        );
+        return;
+      }
+
+      final ok = await launchUrl(
+        Uri.parse(approvalUrl),
+        mode: LaunchMode.externalApplication,
+      );
+      if (!ok && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not launch PayPal approval URL')),
+        );
+      }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('PayPal error: $e')),
+        SnackBar(content: Text('PayPal error: ${e.toString()}')),
       );
     }
   }
 
+  Future<void> _openGoogle() async {
+    final uri = Uri.parse('https://www.google.com');
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!ok && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open Google')),
+      );
+    }
+  }
+
+  Widget _buildTranscript(String finalized, String livePartial) {
+    final spans = <TextSpan>[];
+
+    if (finalized.isNotEmpty) {
+      final parts = finalized.split('\n\n');
+      for (int i = 0; i < parts.length; i++) {
+        if (parts[i].isEmpty) continue;
+        spans.add(TextSpan(text: parts[i]));
+        if (i < parts.length - 1) {
+          spans.add(const TextSpan(text: '\n\n'));
+        }
+      }
+    }
+
+    if (livePartial.isNotEmpty) {
+      if (spans.isNotEmpty) spans.add(const TextSpan(text: ' '));
+      spans.add(
+        TextSpan(
+          text: livePartial,
+          style: const TextStyle(
+            fontStyle: FontStyle.italic,
+            color: Colors.grey,
+          ),
+        ),
+      );
+    }
+
+    return SelectableText.rich(
+      TextSpan(children: spans),
+      style: const TextStyle(fontSize: 16, height: 1.4),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final transcriptListenable = _speechService.transcriptNotifier;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Lectura'),
         actions: [
           if (_isListening)
             IconButton(
-              icon: const Icon(Icons.stop_circle),
               tooltip: 'Stop Recording',
+              icon: const Icon(Icons.stop_circle),
               onPressed: _stopMic,
             ),
         ],
       ),
+      floatingActionButton: _isListening
+          ? FloatingActionButton.extended(
+              onPressed: _stopMic,
+              icon: const Icon(Icons.mic),
+              label: const Text('Listening Tap to stop'),
+            )
+          : null,
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // Transcript area
             Expanded(
               child: ValueListenableBuilder<String>(
-                valueListenable: transcriptListenable,
-                builder: (context, transcript, _) {
-                  return SingleChildScrollView(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.all(12),
-                    child: Text(
-                      transcript.isEmpty
-                          ? 'Transcript will appear here...'
-                          : transcript,
-                      style: const TextStyle(fontSize: 16, height: 1.4),
-                    ),
+                valueListenable: _speechService.transcriptNotifier,
+                builder: (context, finalized, _) {
+                  return ValueListenableBuilder<String>(
+                    valueListenable: _speechService.partialNotifier,
+                    builder: (context, partial, __) {
+                      return SingleChildScrollView(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.all(12),
+                        child: _buildTranscript(finalized, partial),
+                      );
+                    },
                   );
                 },
               ),
             ),
-
             const SizedBox(height: 8),
-
-            // Listening indicator (non-intrusive, only UI)
-            AnimatedOpacity(
-              opacity: _isListening ? 1.0 : 0.0,
-              duration: const Duration(milliseconds: 200),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  _PulseDot(),
-                  SizedBox(width: 8),
-                  Text('Listening…'),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 12),
-
-            // Controls
             Wrap(
               spacing: 10,
               runSpacing: 8,
-              alignment: WrapAlignment.center,
               children: [
                 ElevatedButton.icon(
                   icon: Icon(_isListening ? Icons.mic_off : Icons.mic),
@@ -191,66 +227,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   label: const Text('DOCX'),
                   onPressed: () => _export('DOCX'),
                 ),
-              ],
-            ),
-
-            const SizedBox(height: 12),
-
-            // PayPal + Google
-            Wrap(
-              spacing: 10,
-              children: [
-                FilledButton(
-                  onPressed: () => _createOrder(10.00),
-                  child: const Text('PayPal'),
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.workspace_premium),
+                  label: const Text('Upgrade to Pro'),
+                  onPressed: _upgradeToPro,
                 ),
-                OutlinedButton(
-                  onPressed: () => launchUrl(
-                    Uri.parse('https://www.google.com'),
-                    mode: LaunchMode.externalApplication,
-                  ),
-                  child: const Text('Test Google'),
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.public),
+                  label: const Text('Open Google'),
+                  onPressed: _openGoogle,
                 ),
               ],
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PulseDot extends StatefulWidget {
-  const _PulseDot({Key? key}) : super(key: key);
-
-  @override
-  State<_PulseDot> createState() => _PulseDotState();
-}
-
-class _PulseDotState extends State<_PulseDot> with SingleTickerProviderStateMixin {
-  late final AnimationController _c =
-      AnimationController(vsync: this, duration: const Duration(milliseconds: 900))
-        ..repeat(reverse: true);
-  late final Animation<double> _scale = Tween(begin: 0.8, end: 1.2).animate(
-    CurvedAnimation(parent: _c, curve: Curves.easeInOut),
-  );
-
-  @override
-  void dispose() {
-    _c.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ScaleTransition(
-      scale: _scale,
-      child: Container(
-        width: 10,
-        height: 10,
-        decoration: const BoxDecoration(
-          color: Colors.green,
-          shape: BoxShape.circle,
         ),
       ),
     );

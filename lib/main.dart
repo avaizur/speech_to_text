@@ -1,7 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'home_screen.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Load env from packaged asset
+  await dotenv.load(fileName: "assets/config/app.env");
+
+  // (Optional) quick check  comment out in production
+  debugPrint('PAYPAL_CLIENT_ID present: ${dotenv.env['PAYPAL_CLIENT_ID']?.isNotEmpty == true}');
+  debugPrint('PAYPAL_CLIENT_SECRET present: ${dotenv.env['PAYPAL_CLIENT_SECRET']?.isNotEmpty == true}');
+
   runApp(const MyApp());
 }
 

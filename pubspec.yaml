@@ -33,12 +33,12 @@ dev_dependencies:
   flutter_lints: ^3.0.2
   mockito: ^5.4.4
 
+
 flutter:
   uses-material-design: true
   assets:
     - assets/icon/lectura_app_logo_512x512_transparent.png
     - assets/empty.docx
     - assets/template.docx
-    - .env
-
+    - assets/config/app.env
 

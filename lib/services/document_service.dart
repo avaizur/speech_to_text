@@ -35,7 +35,14 @@ class DocumentService {
 
   Future<void> _exportPdf(String text, String filename) async {
     final pdf = pw.Document();
-    pdf.addPage(pw.Page(build: (context) => pw.Text(text)));
+    pdf.addPage(
+      pw.Page(
+        build: (context) => pw.Text(
+          text,
+          style: const pw.TextStyle(fontSize: 12),
+        ),
+      ),
+    );
     final dir = await getTemporaryDirectory();
     final file = File('${dir.path}/$filename');
     await file.writeAsBytes(await pdf.save());
@@ -43,7 +50,7 @@ class DocumentService {
   }
 
   Future<void> _exportDocx(String text, String filename) async {
-    // Load template from assets. Your template 'assets/empty.docx' should contain {{body}}
+    // Ensure you have an asset at assets/empty.docx with {{body}} placeholder
     final bytes = await rootBundle.load('assets/empty.docx');
     final tpl = await DocxTemplate.fromBytes(bytes.buffer.asUint8List());
 
