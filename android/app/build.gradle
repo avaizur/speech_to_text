@@ -17,25 +17,21 @@ def flutterVersionName = localProperties.getProperty('flutter.versionName') ?: '
 
 android {
     namespace 'com.lectura.app'
-    compileSdkVersion 34
+    compileSdkVersion 35   // ? bumped
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
     }
 
-    kotlinOptions {
-        jvmTarget = '11'
-    }
+    kotlinOptions { jvmTarget = '11' }
 
-    sourceSets {
-        main.java.srcDirs += 'src/main/kotlin'
-    }
+    sourceSets { main.java.srcDirs += 'src/main/kotlin' }
 
     defaultConfig {
         applicationId 'com.lectura.app'
         minSdkVersion 21
-        targetSdkVersion 34
+        targetSdkVersion 35   // ? bumped
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
         multiDexEnabled true
@@ -69,9 +65,7 @@ android {
     }
 }
 
-flutter {
-    source '../..'
-}
+flutter { source '../..' }
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.22"
